@@ -1,0 +1,314 @@
+/* From Uiverse.io by petar_4019 */ 
+.cyber-toggle {
+  --hue: 180;
+  --core-size: 80px;
+  display: inline-block;
+  padding: 2rem;
+  background: #0a0a12;
+  border-radius: 35px;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease-in-out;
+}
+
+.cyber-toggle:hover {
+  -webkit-transform: perspective(100px) rotateX(5deg) rotateY(-5deg);
+  transform: perspective(100px) rotateX(5deg) rotateY(-5deg);
+}
+
+.cyber-input {
+  position: absolute;
+  opacity: 0;
+}
+
+.cyber-label {
+  display: block;
+  cursor: pointer;
+  width: var(--core-size);
+  height: calc(var(--core-size) / 2);
+  position: relative;
+  transition: filter 0.3s ease;
+}
+
+.cyber-core {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: #1a1a2f;
+  border-radius: 40px;
+  transition: all 0.4s ease;
+  overflow: hidden;
+  box-shadow:
+    inset 0 4px 12px rgba(255, 255, 255, 0.1),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cyber-toggle-circle {
+  position: absolute;
+  width: calc(var(--core-size) / 2 - 8px);
+  height: calc(var(--core-size) / 2 - 8px);
+  background: #ffffff;
+  border-radius: 50%;
+  top: 4px;
+  left: 4px;
+  transition: transform 0.4s ease;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+.cyber-power-line {
+  position: absolute;
+  width: calc(var(--core-size) * 1.14159 + 4rem);
+  height: 2px;
+  background: linear-gradient(
+    135deg,
+    hsl(280, 80%, 40%),
+    hsl(320, 70%, 50%),
+    hsl(340, 85%, 45%)
+  );
+
+  top: 50%;
+  left: calc(-1 * (var(--core-size) + 2rem));
+  transform: translateY(-220%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.cyber-power-ring {
+  position: absolute;
+  inset: -2px;
+  outline: 3px solid transparent;
+  border-radius: 12px;
+  opacity: 0;
+  transform: scale(1);
+  pointer-events: none;
+  box-shadow: 0 0 6px transparent; /* glow */
+  background: linear-gradient(
+    to right,
+    rgba(99, 49, 49, 0.2) 0%,
+    rgba(31, 28, 212, 0.2) 15%,
+    rgba(64, 6, 112, 0.2) 30%,
+    rgba(131, 33, 161, 0.2) 45%,
+    rgba(132, 14, 179, 0.2) 60%,
+    rgba(255, 0, 242, 0.2) 100%
+  );
+
+  background-size: 200% 100%; /* smooth*/
+}
+
+.cyber-input:checked ~ .cyber-label .cyber-core {
+  background: #242444;
+  box-shadow:
+    inset 0 4px 24px rgba(255, 255, 255, 0.2),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.6),
+    0 0 8px rgba(79, 78, 78, 0.6);
+}
+
+.cyber-input:checked ~ .cyber-label .cyber-toggle-circle {
+  transform: translateX(calc(var(--core-size) / 2));
+}
+
+.cyber-input:checked + .cyber-label .cyber-power-line {
+  animation: power-line-in 0.6s ease forwards;
+}
+
+.cyber-input:checked + .cyber-label .cyber-power-ring {
+  animation:
+    power-ring-appear 0.6s ease 0.3s forwards,
+    ring-glow 2.5s linear infinite 0.9s;
+}
+
+.cyber-input:checked + .cyber-label .cyber-power-ring .ring-particle {
+  animation: ring-particle-fly 1s ease-out infinite var(--delay);
+}
+
+.cyber-input:not(:checked) + .cyber-label .cyber-power-ring {
+  animation: power-ring-break 0.8s ease forwards;
+}
+
+/* Particles from border */
+.cyber-power-ring .ring-particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: #ffffff;
+  border-radius: 50%;
+  opacity: 0;
+  left: var(--x);
+  top: var(--y);
+}
+
+/* Animation */
+@keyframes power-line-in {
+  0% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(-100%);
+  }
+  50% {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-50%) translateX(100%);
+  }
+}
+
+@keyframes power-ring-appear {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes ring-glow {
+  0% {
+    background-position: 0% 0;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  }
+  50% {
+    background-position: 100% 0;
+    box-shadow: 0 0 6px rgba(0, 0, 0, 0.8);
+  }
+  100% {
+    background-position: 200% 0;
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.8);
+  }
+}
+
+@keyframes power-ring-break {
+  0% {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+  25% {
+    clip-path: inset(0 25% 0 25%);
+  }
+  50% {
+    clip-path: inset(25% 25% 25% 25%);
+  }
+  75% {
+    clip-path: inset(40% 40% 40% 40%);
+  }
+  100% {
+    opacity: 0;
+    clip-path: inset(50% 50% 50% 50%);
+  }
+}
+
+@keyframes ring-particle-fly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--px), var(--py));
+  }
+}
+
+/* Particle :D*/
+.cyber-particles {
+  position: absolute;
+  inset: 0;
+}
+
+.particle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: hsl(var(--hue), 100%, 70%);
+  border-radius: 50%;
+  opacity: 0;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.cyber-input:checked ~ .cyber-label .particle {
+  animation: particle-fly 0.8s ease-out forwards;
+}
+
+@keyframes particle-fly {
+  0% {
+    opacity: 1;
+    transform: translate(-50%, -50%);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)));
+  }
+}
+
+.particle:nth-child(1) {
+  --dx: 20px;
+  --dy: -20px;
+}
+.particle:nth-child(2) {
+  --dx: -15px;
+  --dy: 25px;
+}
+.particle:nth-child(3) {
+  --dx: 25px;
+  --dy: 15px;
+}
+.particle:nth-child(4) {
+  --dx: -20px;
+  --dy: -15px;
+}
+.particle:nth-child(5) {
+  --dx: 0px;
+  --dy: -30px;
+}
+
+.cyber-label:hover .cyber-core {
+  transform: scale(1.05);
+  filter: brightness(1.2);
+  box-shadow:
+    inset 0 4px 24px rgba(255, 255, 255, 0.3),
+    inset 0 -4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.cyber-input:active ~ .cyber-label .cyber-core {
+  transform: scale(0.95);
+}
+
+.cyber-input:focus-visible ~ .cyber-label .cyber-core {
+  outline: 2px solid hsl(var(--hue), 100%, 50%);
+  outline-offset: 4px;
+}
+
+.cyber-glare {
+  position: absolute;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    transparent 100%
+  );
+  transform: skewX(-20deg);
+  filter: blur(2px);
+}
+
+.cyber-toggle::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.02) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: 20px 20px;
+  mix-blend-mode: overlay;
+}

@@ -1,0 +1,240 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+/* ---------- Animation & reveal styles for WorthIt sequence ---------- */
+
+/* overlay covers entire window during animation */
+#anim-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483646;
+  display: none;            /* orchestrator shows this when needed */
+  background: rgba(0,0,0,0);/* animator toggles to rgba(0,0,0,1) and back */
+  pointer-events: none;
+  will-change: background, opacity;
+  transition: background 0.45s cubic-bezier(.2,.9,.2,1), opacity 0.45s ease;
+}
+/* initial transparent state is already in #anim-overlay */
+#anim-overlay.darkening {
+  background: rgba(0, 0, 0, 1); /* smoothly fades to black */
+  transition: background 1.2s cubic-bezier(.2,.9,.2,1); /* slower fade */
+}
+
+/* Animated center message (enter from bottom, fade) */
+#anim-message {
+  position: fixed;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, 0);
+  z-index: 2147483647;
+  font-size: clamp(1rem, 2.8vw, 1.6rem);
+  color: #fff;
+  text-align: center;
+  font-weight: 700;
+  pointer-events: none;
+  will-change: transform, opacity;
+  opacity: 0;               /* animator sets opacity via gsap */
+}
+
+/* static input logo (clone originates from here) */
+#static-logo {
+  will-change: transform, opacity;
+}
+
+/* site logos container - start hidden; animator will reveal */
+#site-logos {
+  opacity: 0;
+  transform: translateY(12px); /* small lift in JS timeline to 0 */
+  transition: transform 0.45s cubic-bezier(.2,.9,.2,1), opacity 0.45s ease;
+  will-change: transform, opacity;
+}
+
+/* Table reveal container - hidden until animation reveals it */
+#table-reveal {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+  will-change: opacity;
+}
+
+/* small helper when you want to force show table in CSS (not used by GSAP) */
+#table-reveal.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Improve performance on animated items */
+#static-logo, #site-logos img, #anim-message, #anim-overlay, #table-reveal {
+  backface-visibility: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Reduce motion support */
+@media (prefers-reduced-motion: reduce) {
+  #anim-overlay,
+  #anim-message,
+  #site-logos,
+  #table-reveal {
+    transition: none !important;
+    animation: none !important;
+  }
+
+  /* If reduced-motion is requested, show the table immediately */
+  #table-reveal { opacity: 1; pointer-events: auto; }
+}
+/* App.css or your CSS file */
+.fade-row {
+  opacity: 0;              /* Start invisible */
+  transform: translateY(10px); /* Start slightly below */
+  transition: opacity 0.5s ease, transform 0.5s ease; /* Smooth animation */
+}
+
+.fade-row.show {
+  opacity: 1;             /* Fade in */
+  transform: translateY(0); /* Move to original position */
+}
+/* App.css */
+.fade-row {
+  opacity: 0;
+  transform: translateY(-10px); /* start slightly above */
+  transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.fade-row.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+/* ================== Responsive helpers (append to App.css) ================== */
+
+/* Inputs */
+.responsive-input {
+  width: min(90vw, 500px);
+  font-size: clamp(1rem, 3.5vw, 1.1rem);
+  padding: 1rem;
+  border-radius: 100px;
+  border: 3px solid white;
+  background: black;
+  color: white;
+  outline: none;
+  font-style: italic;
+  font-family: 'Poppins', sans-serif;
+  box-sizing: border-box;
+}
+
+.responsive-price {
+  width: min(90vw, 500px);
+  height: auto;
+  font-size: clamp(1rem, 3.5vw, 1.1rem);
+  padding: 0.75rem 1rem;
+  border-radius: 50px;
+  border: 3px solid white;
+  background: black;
+  color: white;
+  outline: none;
+  box-sizing: border-box;
+}
+
+/* Hero */
+.hero-title {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-weight: 900;
+  font-style: italic;
+  text-align: center;
+  z-index: 10;
+  white-space: normal; /* allow wrapping */
+  font-size: clamp(3rem, 10vw, 8rem);
+  margin: 0;
+  padding: 0 1rem;
+}
+
+/* Logos row */
+.logo-row {
+  display: flex;
+  gap: 3rem;
+  justify-content: center;
+  align-items: center;
+  transform: translateX(-50%);
+}
+
+/* Table wrapper (horizontal scroll on small screens) */
+.results-wrapper {
+  width: 90%;
+  max-width: 900px;
+  margin: 1rem auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+#results-table { min-width: 700px; border-collapse: collapse; border: 1px solid #444; }
+#results-table th, #results-table td { padding: 8px; word-break: break-word; }
+
+/* Mobile-specific adjustments */
+@media (max-width: 820px) {
+  .hero-title {
+    position: relative;
+    transform: none;
+    top: auto;
+    left: auto;
+    margin-top: 1.5rem;
+    font-size: clamp(2rem, 9vw, 4rem);
+  }
+  .logo-row { gap: 1rem; flex-wrap: wrap; }
+}
+
+/* Optional stacked table for very small screens (uncomment if you want stacked rows) */
+/*
+@media (max-width: 520px) {
+  #results-table thead { display: none; }
+  #results-table tr { display: block; margin-bottom: 12px; border-bottom: 1px solid #333; }
+  #results-table td { display: block; text-align: right; padding-left: 50%; position: relative; }
+  #results-table td::before {
+    content: attr(data-label);
+    position: absolute;
+    left: 8px;
+    width: 45%;
+    text-align: left;
+    font-weight: 600;
+  }
+}
+*/
