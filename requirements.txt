@@ -1,12 +1,11 @@
 fastapi
-uvicorn
+uvicorn[standard]
 playwright
 selenium
 requests
 beautifulsoup4
 lxml
 python-dotenv
-asyncio
 greenlet
 pandas
 webdriver-manager
