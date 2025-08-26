@@ -1,9 +1,10 @@
-pandas
 fastapi
 uvicorn
 playwright
 selenium
+requests
+beautifulsoup4
+lxml
+python-dotenv
 asyncio
 greenlet
-requests
-lxml
