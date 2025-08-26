@@ -8,3 +8,4 @@ lxml
 python-dotenv
 asyncio
 greenlet
+pandas
