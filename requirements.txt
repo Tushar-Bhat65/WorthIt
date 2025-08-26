@@ -9,3 +9,4 @@ python-dotenv
 asyncio
 greenlet
 pandas
+webdriver-manager
