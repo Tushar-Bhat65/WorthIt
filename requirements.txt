@@ -1,0 +1,11 @@
+pandas
+fastapi
+uvicorn
+playwright
+playwright-cli
+selenium
+asyncio
+greenlet
+requests
+lxml
+```

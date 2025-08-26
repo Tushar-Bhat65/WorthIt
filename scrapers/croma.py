@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException, WebDriverException, ElementNotInteractableException
 from bs4 import BeautifulSoup
 from webdriver_manager.chrome import ChromeDriverManager
-
+from selenium.webdriver.chrome.service import Service
 # --- LOGGING ---
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -40,12 +40,24 @@ class PersistentSeleniumManager:
             return
 
         options = webdriver.ChromeOptions()
+        # headless flag (try new headless if available)
         if headless:
             try:
                 options.add_argument("--headless=new")
             except Exception:
                 options.add_argument("--headless")
                 options.add_argument("--disable-gpu")
+
+        # container-friendly flags
+        options.add_argument("--no-sandbox")
+        options.add_argument("--disable-dev-shm-usage")
+        options.add_argument("--disable-software-rasterizer")
+        options.add_argument("--disable-gpu")
+        options.add_argument("--disable-extensions")
+        options.add_argument("--disable-background-networking")
+        options.add_argument("--disable-background-timer-throttling")
+        options.add_argument("--disable-renderer-backgrounding")
+        options.add_argument("--remote-debugging-port=9222")
         options.add_argument(f"--window-size={window_size}")
         options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
 
@@ -54,23 +66,44 @@ class PersistentSeleniumManager:
         except Exception:
             pass
 
+        # turn off images for speed
         prefs = {"profile.managed_default_content_settings.images": 2}
         options.add_experimental_option("prefs", prefs)
 
+        # Ensure binary location uses env var if set (CHROME_BIN)
+        chrome_bin = os.environ.get("CHROME_BIN", "/usr/bin/chromium")
+        if chrome_bin:
+            try:
+                options.binary_location = chrome_bin
+            except Exception:
+                # ignore if the driver doesn't accept binary_location
+                pass
+
+        # Determine chromedriver service: prefer env var, then default path, else webdriver_manager
         chromedriver_path = os.environ.get("CHROMEDRIVER_PATH")
-        if chromedriver_path:
+        if chromedriver_path and os.path.exists(chromedriver_path):
             service = Service(chromedriver_path)
+        elif os.path.exists("/usr/local/bin/chromedriver"):
+            service = Service("/usr/local/bin/chromedriver")
         else:
-            service = Service(ChromeDriverManager().install())
+            # fallback to webdriver_manager (will attempt to download)
+            try:
+                driver_path = ChromeDriverManager().install()
+                service = Service(driver_path)
+            except Exception as e:
+                logger.error("[PersistentSeleniumManager] ChromeDriver manager install failed: %s", e)
+                raise
 
         try:
+            # instantiate the driver
             self.driver = webdriver.Chrome(service=service, options=options)
+            # increase page load timeout slightly (avoid overly aggressive 6s)
             try:
-                self.driver.set_page_load_timeout(6)
+                self.driver.set_page_load_timeout(30)
             except Exception:
                 pass
             self.started = True
-            logger.info(f"[PersistentSeleniumManager] Started Chrome driver (headless={headless})")
+            logger.info(f"[PersistentSeleniumManager] Started Chrome driver (headless={headless}, binary={chrome_bin})")
         except WebDriverException as e:
             logger.error(f"[PersistentSeleniumManager] WebDriver start error: {e}")
             self.driver = None

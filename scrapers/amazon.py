@@ -1,11 +1,8 @@
-import asyncio
-import nest_asyncio
 import re
+import asyncio
 import time
 from typing import Optional, Dict, Any, List
 from playwright.async_api import async_playwright, Browser, Route, Request
-
-nest_asyncio.apply()
 
 # --- CONFIG ---
 HARD_ACCESSORY_KEYWORDS = {
@@ -26,7 +23,10 @@ COLOR_KEYWORDS = {
 STORAGE_RE = re.compile(r'\b\d+(\.\d+)?\s*(gb|tb|mb)\b', flags=re.I)
 
 # --- HELPERS ---
+
+# Helper functions (make sure these exist in your file)
 def clean_price(text: str) -> Optional[int]:
+    import re
     if not text:
         return None
     groups = re.findall(r'\d[\d,\.]*', text)
@@ -36,15 +36,37 @@ def clean_price(text: str) -> Optional[int]:
     num = re.sub(r'[^\d]', '', best)
     return int(num) if num else None
 
+
 def normalize(s: str) -> str:
+    import re
     if not s:
         return ""
     s = s.lower()
     s = re.sub(r"[^\w\s]", " ", s)
     return re.sub(r"\s+", " ", s).strip()
 
+
 def tokenize(s: str) -> List[str]:
     return [w for w in s.split() if w]
+
+HARD_ACCESSORY_KEYWORDS = {'case', 'cover', 'charger', 'cable', 'glass', 'tempered',
+                           'protector', 'adapter', 'earbuds', 'headphones', 'earphones',
+                           'screen', 'screenprotector', 'backcover', 'back', 'back-cover',
+                           'skin', 'spare', 'replacement', 'parts'}
+
+VARIANT_KEYWORDS = {"pro", "max", "lite", "plus", "e", "se", "ultra", "mini", "fe", "promax"}
+
+COMMON_STOPWORDS = {'mobile', 'phone', 'with', 'and', 'works', 'for', 'the', 'in', 'a', 'an',
+                    'new', 'smartphone', 'dual', 'sim', 'edition', 'version', 'model', 'capacity',
+                    'cellular', 'unlocked', 'brand', 'only', 'available'}
+
+COLOR_KEYWORDS = {'black', 'white', 'red', 'blue', 'green', 'yellow', 'gold', 'silver',
+                  'titanium', 'natural', 'desert', 'pink', 'purple', 'graphite', 'space',
+                  'grey', 'gray', 'teal', 'ultramarine'}
+
+import re
+STORAGE_RE = re.compile(r'\b\d+(\.\d+)?\s*(gb|tb|mb)\b', flags=re.I)
+
 
 def is_relevant(query: str, title: str, price: Optional[int]) -> (bool, str):
     if not title or not query:
@@ -69,8 +91,8 @@ def is_relevant(query: str, title: str, price: Optional[int]) -> (bool, str):
             return (False, "Extra variant found")
     return (True, "Match")
 
-# --- Persistent Browser Manager ---
-class FlipkartScraper:
+
+class AmazonScraper:
     def __init__(self):
         self.playwright = None
         self.browser: Optional[Browser] = None
@@ -95,73 +117,85 @@ class FlipkartScraper:
             await self.playwright.stop()
 
     async def _block_resources(self, route: Route, request: Request):
-        if request.resource_type in ("image", "stylesheet", "font", "media"):
+        blocked_types = {"image", "stylesheet", "font", "media"}
+        blocked_scripts = [
+            "tracking", "analytics", "pixel", "adsystem", "google-analytics", "doubleclick"
+        ]
+        url = request.url.lower()
+        if request.resource_type in blocked_types or any(b in url for b in blocked_scripts):
             await route.abort()
         else:
             await route.continue_()
 
-    async def scrape_flipkart(self, query: str, max_items: int = 6, timeout: int = 15000) -> Dict[str, Any]:
+    async def scrape_amazon(self, query: str, max_items: int = 6, timeout: int = 15000) -> Dict[str, Any]:
         page = await self.context.new_page()
-        start_time = time.time()
         try:
-            await page.goto(f"https://www.flipkart.com/search?q={query.replace(' ', '+')}",
-                            wait_until="domcontentloaded", timeout=timeout)
-            await page.wait_for_selector("div[data-id], div._13oc-S, div._1xHGtK, div.slAVV4, div._4ddWXP, div.cPHb8h",
-                                         state="attached", timeout=5000)
+            await page.goto(
+                f"https://www.amazon.in/s?k={query.replace(' ', '+')}",
+                wait_until="domcontentloaded",
+                timeout=timeout
+            )
+            await page.wait_for_selector("div.s-main-slot", state="attached", timeout=4000)
 
             raw_products = await page.evaluate(f"""
             () => {{
-                return Array.from(document.querySelectorAll("div[data-id], div._13oc-S, div._1xHGtK, div.slAVV4, div._4ddWXP, div.cPHb8h"))
-                    .slice(0, {max_items}).map(item => {{
-                        const title = item.querySelector("a.s1Q9rs, div._4rR01T, span.B_NuCI, a.WKTcLC, a.IRpwTa, a.wjcEIp, span.wjcEIp, ._2WkVRV, .KzDlHZ, ._3Djpdu, a._2UzuFa, ._2B_pCR, div._2cLu-l")?.innerText?.trim() || null;
-                        const priceText = item.querySelector("div._30jeq3, div._1_WHN1, div.Nx9bqj, ._25b18c, div._3_M9q6, div._1-HjSm, div.yT_W-Q")?.innerText || null;
-                        const ratingText = item.querySelector("div._3LWZlK, div.XQDdHH, span.Y1HWO0, div.gUuXy-")?.innerText || null;
-                        const link = item.querySelector("a._2UzuFa, a.s1Q9rs, a.WKTcLC, a.rPDeLR, a._1fQZEK, a.VJA3rP, a.wjcEIp, a.DMMoT0, a.CGtC98, a.IRpwTa, a._2kHMtA, a.zabNxf, a.t-pElj")?.href || null;
-                        return {{ title, priceText, ratingText, url: link }};
-                    }});
+                const items = Array.from(document.querySelectorAll("div[data-component-type='s-search-result']")).slice(0, {max_items});
+                return items.map(item => {{
+                    const titleEl = item.querySelector("h2 span");
+                    const priceEl = item.querySelector("span.a-offscreen");
+                    const ratingEl = item.querySelector("span.a-icon-alt");
+                    const linkEl = item.querySelector("a.a-link-normal[href*='/dp/'], a[href*='/gp/']");
+                    return {{
+                        title: titleEl ? titleEl.innerText.trim() : null,
+                        priceText: priceEl ? priceEl.innerText : null,
+                        ratingText: ratingEl ? ratingEl.innerText : null,
+                        url: linkEl ? linkEl.href : null
+                    }};
+                }});
             }}
             """)
 
-            relevant = []
-            for p in raw_products:
-                price_val = clean_price(p["priceText"])
-                ok, _ = is_relevant(query, p["title"] or "", price_val)
-                if ok:
-                    relevant.append({
-                        "title": p["title"],
-                        "price": price_val,
-                        "rating": p["ratingText"].split()[0] if p["ratingText"] else None,
-                        "url": p["url"] if p["url"] else f"https://www.flipkart.com/search?q={query.replace(' ', '+')}"
-                    })
+            relevant = [
+                {
+                    "title": p["title"],
+                    "price": clean_price(p["priceText"]),
+                    "rating": p["ratingText"].split()[0] if p["ratingText"] else None,
+                    "url": p["url"] if p["url"] else f"https://www.amazon.in/s?k={query.replace(' ', '+')}"
+                }
+                for p in raw_products
+                if p["title"] and is_relevant(query, p["title"], clean_price(p["priceText"]))[0]
+            ]
 
-            if relevant:
-                cheapest = min(relevant, key=lambda x: x["price"])
-                cheapest["time_taken"] = round(time.time() - start_time, 2)
-                return cheapest
-            return {}
+            valid_relevant = [p for p in relevant if p["price"] is not None]
 
+            if valid_relevant:
+                return min(valid_relevant, key=lambda x: x["price"])
+            elif relevant:
+                return relevant[0]
+            else:
+                return {}
         finally:
             await page.close()
 
-# --- Exported Function ---
-_scraper_instance: FlipkartScraper = None
+# --- Exported Function for Backend ---
+_scraper_instance: Optional[AmazonScraper] = None
 
-async def fetch_flipkart_products(query: str) -> Dict[str, Any]:
+async def fetch_amazon_product(query: str) -> Dict[str, Any]:
     global _scraper_instance
     if _scraper_instance is None:
-        _scraper_instance = FlipkartScraper()
+        _scraper_instance = AmazonScraper()
         await _scraper_instance.start(headless=True)
-    return await _scraper_instance.scrape_flipkart(query)
+    return await _scraper_instance.scrape_amazon(query)
 
-# Backward compatibility alias
-scrape_flipkart = fetch_flipkart_products
-
-# --- Demo ---
+# --- Optional Demo ---
 if __name__ == "__main__":
     async def main():
         query = input("Enter product name: ").strip()
         start_time = time.time()
-        result = await fetch_flipkart_products(query)
+        result = await fetch_amazon_product(query)
         print(result or "No relevant products found.")
         print(f"⏱ Time: {time.time() - start_time:.2f}s")
     asyncio.run(main())
+
+# Backward compatibility for old backend
+scrape_amazon = fetch_amazon_product

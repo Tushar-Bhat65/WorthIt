@@ -947,7 +947,7 @@ export default function App() {
         {/* Linear Progress */}
         <div style={{ width: '90%', maxWidth: '900px', margin: '2rem auto', textAlign: 'center' }}>
           {worthinessScore > 0 && (
-            <div style={{ marginBottom: '0.5rem', fontWeight: 'bold', fontStyle: 'italic' }}>
+            <div style={{ marginBottom: '0.1rem', fontWeight: 'bold', fontStyle: 'italic' }}>
               {getWorthinessMessage(worthinessScore)}
             </div>
           )}

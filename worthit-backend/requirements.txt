@@ -1,7 +1,0 @@
-fastapi
-uvicorn[standard]
-playwright
-selenium
-requests
-beautifulsoup4
-lxml
